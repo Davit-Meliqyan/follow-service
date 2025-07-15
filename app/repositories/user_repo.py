@@ -1,10 +1,12 @@
 from arango.collection import StandardCollection
-from app.db import users
+from app import arango_db_helper, CollectionTypes
 
 
 class UserRepository:
-    def __init__(self, user_coll: StandardCollection = users):
-        self.user_coll = user_coll
+    def __call__(self, *args, **kwargs):
+        self.user_coll: StandardCollection = arango_db_helper.connections[
+            CollectionTypes.users.value[0]
+        ]
 
     def create_user(self, username: str):
         if not username:
@@ -14,10 +16,7 @@ class UserRepository:
             print(f"[INFO] User '{username}' already exists. Skipping creation.")
             return
 
-        self.user_coll.insert({
-            "_key": username,
-            "username": username
-        })
+        self.user_coll.insert({"_key": username, "username": username})
         print(f"[INFO] User '{username}' created successfully.")
 
     def user_exists(self, username: str) -> bool:

@@ -1,30 +1,27 @@
 from datetime import datetime as dt, UTC
-
 from arango.collection import StandardCollection, EdgeCollection
-
-from app.db import users, follows, db
+from app import arango_db_helper, CollectionTypes
 
 
 class FollowRepository:
-    def __init__(self,
-                 user_coll: StandardCollection,
-                 follow_coll: EdgeCollection,
-                 db):
-        self.user_coll = user_coll
-        self.follow_coll = follow_coll
-        self.db = db
-
+    def __init__(self):
+        print(arango_db_helper.connections)
+        self.user_coll: StandardCollection = arango_db_helper.connections[
+            CollectionTypes.users.value[0]
+        ]
+        self.follow_coll: EdgeCollection = arango_db_helper.connections[
+            CollectionTypes.follows.value[0]
+        ]
+        self.db = arango_db_helper.follow_db
 
     @staticmethod
     def _validate_username(username: str):
         if not isinstance(username, str) or not username.strip():
             raise TypeError("Username must be a non-empty string")
 
-
     def _user_exists(self, username: str) -> bool:
         # Check if user with this username exists
         return self.user_coll.has(username)
-
 
     def create_follow(self, follower: str, followed: str) -> dict:
         # Validate input usernames
@@ -48,13 +45,12 @@ class FollowRepository:
             "_key": edge_key,
             "_from": f"users/{follower}",
             "_to": f"users/{followed}",
-            "followedAt": dt.now(tz=UTC).isoformat()
+            "followedAt": dt.now(tz=UTC).isoformat(),
         }
 
         self.follow_coll.insert(edge, overwrite=True)
         print(f"[INFO] Follow saved: {edge_key}")
         return edge
-
 
     def get_followers(self, username: str) -> list[dict]:
         print(f"[INFO] Getting followers for '{username}'")
@@ -66,14 +62,10 @@ class FollowRepository:
                 followedAt: e.followedAt
             }
         """
-        cursor = self.db.aql.execute(
-            query,
-            bind_vars={"userDoc": f"users/{username}"}
-        )
+        cursor = self.db.aql.execute(query, bind_vars={"userDoc": f"users/{username}"})
         results = list(cursor)
         print(f"[INFO] Found {len(results)} followers.")
         return results
-
 
     def get_following(self, username: str) -> list[dict]:
         print(f"[INFO] Getting users followed by '{username}'")
@@ -85,14 +77,10 @@ class FollowRepository:
                 followedAt: e.followedAt
             }
         """
-        cursor = self.db.aql.execute(
-            query,
-            bind_vars={"userDoc": f"users/{username}"}
-        )
+        cursor = self.db.aql.execute(query, bind_vars={"userDoc": f"users/{username}"})
         results = list(cursor)
         print(f"[INFO] Found {len(results)} followed users.")
         return results
-
 
     def delete_follow(self, follower: str, followed: str) -> bool:
         # Validate input usernames
@@ -111,4 +99,4 @@ class FollowRepository:
         return False
 
 
-follow_repo = FollowRepository(users, follows, db)
+follow_repo = FollowRepository()

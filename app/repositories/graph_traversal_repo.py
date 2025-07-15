@@ -1,5 +1,6 @@
 from arango.database import StandardDatabase
-from app.db import db
+
+from app import arango_db_helper
 
 
 class GraphTraversalRepository:
@@ -12,7 +13,6 @@ class GraphTraversalRepository:
         if not isinstance(username, str) or not username.strip():
             raise TypeError("Username must be a non-empty string")
 
-
     @staticmethod
     def _validate_max_depth(max_depth: int):
         # Validate that max_depth is an integer
@@ -24,7 +24,6 @@ class GraphTraversalRepository:
         # Call separate validation methods
         cls._validate_username(username)
         cls._validate_max_depth(max_depth)
-
 
     def traverse_bfs(self, username: str, max_depth: int = 3) -> list[dict]:
         self._validate_input(username, max_depth)
@@ -39,8 +38,7 @@ class GraphTraversalRepository:
               }
           """
         cursor = self.db.aql.execute(
-            query,
-            bind_vars={"userKey": f"users/{username}", "maxDepth": max_depth}
+            query, bind_vars={"userKey": f"users/{username}", "maxDepth": max_depth}
         )
         results = list(cursor)
         print(f"[INFO] BFS traversal found {len(results)} users.")
@@ -59,12 +57,11 @@ class GraphTraversalRepository:
               }
           """
         cursor = self.db.aql.execute(
-            query,
-            bind_vars={"userKey": f"users/{username}", "maxDepth": max_depth}
+            query, bind_vars={"userKey": f"users/{username}", "maxDepth": max_depth}
         )
         results = list(cursor)
         print(f"[INFO] DFS traversal found {len(results)} users.")
         return results
 
 
-graph_traversal_repo = GraphTraversalRepository(db=db)
+graph_traversal_repo = GraphTraversalRepository(db=arango_db_helper.follow_db)

@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 from testcontainers.arangodb import ArangoDbContainer
 from arango import ArangoClient
@@ -5,35 +7,36 @@ from arango import ArangoClient
 from app.repositories.user_repo import UserRepository
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(autouse=True)
+def mocked_user_repo():
+    user_repository = MagicMock()
+    return user_repository
+
+
+@pytest.fixture(scope="function")
 def arango_container():
     print("[LOG] Starting ArangoDB test container...")
-    with ArangoDbContainer("arangodb:latest") as container:
-        container.with_env("ARANGO_ROOT_PASSWORD", "1234")
+    with ArangoDbContainer("arangodb") as container:
+        container.with_env("ARANGO_NO_AUTH", "1")
         container.start()
 
         url = f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8529)}"
         print(f"[LOG] ArangoDB container started at {url}")
-        yield {
-            "url": url,
-            "username": "root",
-            "password": "test"
-        }
-    print("[LOG] ArangoDB test container stopped.")
+        yield container
 
 
 @pytest.fixture
-def user_repo_with_temp_db(arango_container):
-    client = ArangoClient(hosts=arango_container["url"])
+def user_repo_with_temp_db(mocked_user_repo, arango_container):
+    client = ArangoClient(hosts=arango_container.get_connection_url())
     db_name = "test_db"
-    sys_db = client.db("_system", username=arango_container["username"], password=arango_container["password"])
+    sys_db = client.db("_system")
     if not sys_db.has_database(db_name):
         print(f"[LOG] Creating test database '{db_name}'...")
         sys_db.create_database(db_name)
     else:
         print(f"[LOG] Test database '{db_name}' already exists.")
 
-    db = client.db(db_name, username=arango_container["username"], password=arango_container["password"])
+    db = client.db(db_name)
     if not db.has_collection("users"):
         print("[LOG] Creating 'users' collection...")
         db.create_collection("users")
