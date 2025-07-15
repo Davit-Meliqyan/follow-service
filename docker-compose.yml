@@ -1,0 +1,28 @@
+#version: "3.9"
+#
+#services:
+#  arangodb:
+#    image: arangodb:latest
+#    container_name: arangodb
+#    environment:
+#      ARANGO_ROOT_PASSWORD: admin  # Root password for ArangoDB
+#    ports:
+#      - "8529:8529"  # Expose ArangoDB web UI and API port
+#    volumes:
+#      - arangodb-data:/var/lib/arangodb3  # Persist ArangoDB data
+#
+#  fastapi-app:
+#    build: .
+#    container_name: fastapi-app
+#    depends_on:
+#      - arangodb  # Wait for ArangoDB to be ready before starting
+#    environment:
+#      ARANGO_URL: "http://arangodb:8529"  # ArangoDB URL inside Docker network
+#      ARANGO_ROOT_PASSWORD: admin  # ArangoDB password
+#    ports:
+#      - "3000:3000"  # Expose FastAPI app on port 3000
+#    command: >
+#      uvicorn run:app --host 0.0.0.0 --port 3000 --reload  # Start FastAPI with reload enabled
+#
+#volumes:
+#  arangodb-data:  # Named volume for ArangoDB persistent data
