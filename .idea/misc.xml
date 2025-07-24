@@ -6,5 +6,5 @@
     <option name="pathToExecutable" value="$PROJECT_DIR$/../atofflow/storiespush_oauth/venv/bin/black" />
     <option name="sdkName" value="Python 3.11 virtualenv at ~/PycharmProjects/follow-service/venv" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11 virtualenv at ~/PycharmProjects/follow-service/venv" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (follow-service-1)" project-jdk-type="Python SDK" />
 </project>

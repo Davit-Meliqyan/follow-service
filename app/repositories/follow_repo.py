@@ -1,23 +1,32 @@
 from datetime import datetime as dt, UTC
+
 from arango.collection import StandardCollection, EdgeCollection
-from app import arango_db_helper, CollectionTypes
+from arango.database import StandardDatabase
+
+from app.arango_db_helper import arango_db_helper, CollectionTypes
+from app.validators.username_validator import UserValidator
 
 
 class FollowRepository:
-    def __init__(self):
-        print(arango_db_helper.connections)
-        self.user_coll: StandardCollection = arango_db_helper.connections[
-            CollectionTypes.users.value[0]
-        ]
-        self.follow_coll: EdgeCollection = arango_db_helper.connections[
-            CollectionTypes.follows.value[0]
-        ]
-        self.db = arango_db_helper.follow_db
-
-    @staticmethod
-    def _validate_username(username: str):
-        if not isinstance(username, str) or not username.strip():
-            raise TypeError("Username must be a non-empty string")
+    def __init__(
+            self,
+            user_coll: StandardCollection = None,
+            follow_coll: EdgeCollection = None,
+            db: StandardDatabase = None,
+    ):
+        if user_coll is None or follow_coll is None or db is None:
+            print(arango_db_helper.connections)
+            self.user_coll = arango_db_helper.connections[
+                CollectionTypes.users.value[0]
+            ]
+            self.follow_coll = arango_db_helper.connections[
+                CollectionTypes.follows.value[0]
+            ]
+            self.db = arango_db_helper.follow_db
+        else:
+            self.user_coll = user_coll
+            self.follow_coll = follow_coll
+            self.db = db
 
     def _user_exists(self, username: str) -> bool:
         # Check if user with this username exists
@@ -25,8 +34,8 @@ class FollowRepository:
 
     def create_follow(self, follower: str, followed: str) -> dict:
         # Validate input usernames
-        self._validate_username(follower)
-        self._validate_username(followed)
+        UserValidator.validate_username(follower)
+        UserValidator.validate_username(followed)
 
         # Prevent following oneself
         if follower == followed:
@@ -84,8 +93,8 @@ class FollowRepository:
 
     def delete_follow(self, follower: str, followed: str) -> bool:
         # Validate input usernames
-        self._validate_username(follower)
-        self._validate_username(followed)
+        UserValidator.validate_username(follower)
+        UserValidator.validate_username(followed)
 
         edge_key = f"{follower}__{followed}"
         print(f"[INFO] Deleting follow: {follower} -> {followed}")

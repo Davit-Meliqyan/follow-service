@@ -1,17 +1,12 @@
 from arango.database import StandardDatabase
 
-from app import arango_db_helper
+from app.arango_db_helper import arango_db_helper
+from app.validators.username_validator import UserValidator
 
 
 class GraphTraversalRepository:
     def __init__(self, db: StandardDatabase):
         self.db = db
-
-    @staticmethod
-    def _validate_username(username: str):
-        # Validate that username is a non-empty string
-        if not isinstance(username, str) or not username.strip():
-            raise TypeError("Username must be a non-empty string")
 
     @staticmethod
     def _validate_max_depth(max_depth: int):
@@ -22,7 +17,7 @@ class GraphTraversalRepository:
     @classmethod
     def _validate_input(cls, username: str, max_depth: int):
         # Call separate validation methods
-        cls._validate_username(username)
+        UserValidator.validate_username(username)
         cls._validate_max_depth(max_depth)
 
     def traverse_bfs(self, username: str, max_depth: int = 3) -> list[dict]:

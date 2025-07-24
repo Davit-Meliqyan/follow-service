@@ -67,7 +67,7 @@ def test_user_exists_false(user_repo, mock_collection):
 def test_create_user_with_invalid_username(user_repo):
     """Test create_user with invalid input (e.g., None)."""
     with pytest.raises(TypeError):
-        user_repo.create_user(None)  # Should raise error if not handled
+        user_repo.create_user(None)
     print(f"[TEST] Creating user with None raised TypeError as expected.")
 
 
