@@ -1,31 +1,34 @@
 import pytest
 
-from app.arango_db_helper import ArangoDBHelper, CollectionTypes
+from app import get_arango_db_helper
+from app.arango_db_helper import CollectionTypes
 from app.repositories.follow_repo import FollowRepository
 from app.repositories.user_repo import UserRepository
 
 
 # --------- FIXTURES ---------
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def arango_helper():
-    helper = ArangoDBHelper(is_test_mode=True)
+    helper = get_arango_db_helper(is_test_mode=True)
     yield helper
-    for coll in helper.connections.values():
+    for name, coll in helper.collections.items():
         coll.truncate()
-
+        print(f"[FIXTURE] Truncated collection: {name}")
 
 @pytest.fixture()
 def follow_repo(arango_helper):
-    follow_coll = arango_helper.connections[CollectionTypes.follows.value[0]]
-    follow_coll.truncate()
-    return FollowRepository(follow_coll=follow_coll)
-
+    user_coll = arango_helper.collections[CollectionTypes.users.value[0]]
+    follow_coll = arango_helper.collections[CollectionTypes.follows.value[0]]
+    return FollowRepository(
+        user_coll=user_coll,
+        follow_coll=follow_coll,
+        db=arango_helper.db
+    )
 
 @pytest.fixture()
 def user_repo(arango_helper):
-    users_coll = arango_helper.connections[CollectionTypes.users.value[0]]
-    users_coll.truncate()
+    users_coll = arango_helper.collections[CollectionTypes.users.value[0]]
     return UserRepository(user_coll=users_coll)
 
 

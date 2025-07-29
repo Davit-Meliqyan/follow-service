@@ -2,22 +2,23 @@
 
 import pytest
 
-from app.arango_db_helper import ArangoDBHelper, CollectionTypes
+from app import get_arango_db_helper
+from app.arango_db_helper import CollectionTypes
 from app.repositories.user_repo import UserRepository
 
 
 @pytest.fixture()
 def arango_helper():
-    helper = ArangoDBHelper(is_test_mode=True)
+    helper = get_arango_db_helper(is_test_mode=True)
     yield helper
 
-    for coll in helper.connections.values():
+    for coll in helper.collections.values():
         coll.truncate()
 
 
 @pytest.fixture()
 def user_repo(arango_helper):
-    users_coll = arango_helper.connections[CollectionTypes.users.value[0]]
+    users_coll = arango_helper.collections[CollectionTypes.users.value[0]]
     users_coll.truncate()
     return UserRepository(user_coll=users_coll)
 

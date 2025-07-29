@@ -256,3 +256,25 @@ def test_create_follow_insert_called_with_expected_data(follow_repo, mock_user_c
     assert inserted_doc["_to"] == "users/beta"
     assert "followedAt" in inserted_doc
     print("[TEST] Verified insert data structure in create_follow.")
+
+
+def test_count_followers(follow_repo, mock_db):
+    """Test count_followers returns correct number."""
+    mock_db.aql.execute.return_value = iter([42])
+
+    result = follow_repo.count_followers("userX")
+
+    assert result == 42
+    mock_db.aql.execute.assert_called_once()
+    print("[TEST] Successfully tested count_followers.")
+
+
+def test_count_following(follow_repo, mock_db):
+    """Test count_following returns correct number."""
+    mock_db.aql.execute.return_value = iter([7])
+
+    result = follow_repo.count_following("userY")
+
+    assert result == 7
+    mock_db.aql.execute.assert_called_once()
+    print("[TEST] Successfully tested count_following.")

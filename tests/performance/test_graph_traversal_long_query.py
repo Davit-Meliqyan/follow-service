@@ -1,18 +1,18 @@
 import time
-
 import pytest
 from arango.database import StandardDatabase
 
-from app.arango_db_helper import arango_db_helper
+from app import get_arango_db_helper
 from app.repositories.graph_traversal_repo import GraphTraversalRepository
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def db() -> StandardDatabase:
-    return arango_db_helper.follow_db
+    helper = get_arango_db_helper(is_test_mode=True)  # Тестовая база
+    return helper.db
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def graph_traversal_repo(db) -> GraphTraversalRepository:
     return GraphTraversalRepository(db=db)
 
@@ -52,7 +52,6 @@ def test_long_running_query_timing(graph_traversal_repo):
     print("[TEST] Long-running query test PASSED ✅")
 
 
-# Requires Arango server-side timeout settings, or separate test setup
 def test_query_timeout_simulation(graph_traversal_repo):
     print("[TEST] Simulating query timeout (if supported)")
 
@@ -63,7 +62,7 @@ def test_query_timeout_simulation(graph_traversal_repo):
     """
 
     try:
-        cursor = graph_traversal_repo.db.aql.execute(query, ttl=10)  # ttl simulates timeout window
+        cursor = graph_traversal_repo.db.aql.execute(query, ttl=10)  # ttl - время жизни запроса (timeout)
         list(cursor)
         pytest.fail("Expected timeout did not occur")
     except Exception as e:

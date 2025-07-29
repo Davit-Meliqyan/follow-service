@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query
-from app.repositories.graph_traversal_repo import graph_traversal_repo
+from app.repositories import graph_traversal_repo
 from app.models import FollowOut
 
 router = APIRouter(

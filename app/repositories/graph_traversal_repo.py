@@ -1,6 +1,5 @@
 from arango.database import StandardDatabase
 
-from app.arango_db_helper import arango_db_helper
 from app.validators.username_validator import UserValidator
 
 
@@ -25,13 +24,13 @@ class GraphTraversalRepository:
 
         print(f"[INFO] BFS traversal from '{username}', max depth = {max_depth}")
         query = """
-          FOR v, e, p IN 1..@maxDepth OUTBOUND @userKey follows
-              OPTIONS { bfs: true, uniqueVertices: 'global' }
-              RETURN {
-                  followed: v.username,
-                  followedAt: e.followedAt
-              }
-          """
+        FOR v, e, p IN 1..@maxDepth OUTBOUND @userKey follows
+            OPTIONS { bfs: true, uniqueVertices: 'global' }
+            RETURN {
+                followed: v.username,
+                followedAt: e.followedAt
+            }
+        """
         cursor = self.db.aql.execute(
             query, bind_vars={"userKey": f"users/{username}", "maxDepth": max_depth}
         )
@@ -44,13 +43,13 @@ class GraphTraversalRepository:
 
         print(f"[INFO] DFS traversal from '{username}', max depth = {max_depth}")
         query = """
-          FOR v, e, p IN 1..@maxDepth OUTBOUND @userKey follows
-              OPTIONS { bfs: false, uniqueVertices: 'path' }
-              RETURN {
-                  followed: v.username,
-                  followedAt: e.followedAt
-              }
-          """
+        FOR v, e, p IN 1..@maxDepth OUTBOUND @userKey follows
+            OPTIONS { bfs: false, uniqueVertices: 'path' }
+            RETURN {
+                followed: v.username,
+                followedAt: e.followedAt
+            }
+        """
         cursor = self.db.aql.execute(
             query, bind_vars={"userKey": f"users/{username}", "maxDepth": max_depth}
         )
@@ -58,5 +57,3 @@ class GraphTraversalRepository:
         print(f"[INFO] DFS traversal found {len(results)} users.")
         return results
 
-
-graph_traversal_repo = GraphTraversalRepository(db=arango_db_helper.follow_db)

@@ -1,37 +1,35 @@
 import pytest
 from arango.database import StandardDatabase
 
-from app.arango_db_helper import arango_db_helper
+from app import get_arango_db_helper
 from app.repositories.graph_traversal_repo import GraphTraversalRepository
 
 TEST_USER = "testuser"
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def db() -> StandardDatabase:
-    return arango_db_helper.follow_db
+    helper = get_arango_db_helper(is_test_mode=True)
+    return helper.db  # исправлено
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def repo(db) -> GraphTraversalRepository:
-    return GraphTraversalRepository(db=db)
+    return GraphTraversalRepository(db=db)  # исправлено
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(autouse=True)
 def setup_test_data(db: StandardDatabase):
     users = db.collection("users")
     follows = db.collection("follows")
 
-    # Clear collections before tests
-    users.delete_match({})
-    follows.delete_match({})
+    users.truncate()
+    follows.truncate()
 
-    # Insert test users
     users.insert({"_key": "testuser", "username": "testuser"})
     users.insert({"_key": "user1", "username": "user1"})
     users.insert({"_key": "user2", "username": "user2"})
 
-    # Insert follow relationships: testuser -> user1 -> user2
     follows.insert({
         "_from": "users/testuser",
         "_to": "users/user1",
@@ -45,9 +43,8 @@ def setup_test_data(db: StandardDatabase):
 
     yield
 
-    # Cleanup after tests
-    users.delete_match({})
-    follows.delete_match({})
+    users.truncate()
+    follows.truncate()
 
 
 def test_traverse_bfs_returns_correct_users(repo: GraphTraversalRepository):

@@ -3,7 +3,7 @@ import os
 
 import aio_pika
 
-from app.repositories.user_repo import user_repo
+from app.repositories import user_repo
 
 RABBITMQ_URL = os.getenv("RABBITMQ_URL")
 QUEUE_NAME = os.getenv("QUEUE_NAME", "user_created_queue")

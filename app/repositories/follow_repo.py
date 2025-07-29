@@ -3,7 +3,7 @@ from datetime import datetime as dt, UTC
 from arango.collection import StandardCollection, EdgeCollection
 from arango.database import StandardDatabase
 
-from app.arango_db_helper import arango_db_helper, CollectionTypes
+from app import get_arango_db_helper
 from app.validators.username_validator import UserValidator
 
 
@@ -13,42 +13,34 @@ class FollowRepository:
             user_coll: StandardCollection = None,
             follow_coll: EdgeCollection = None,
             db: StandardDatabase = None,
+            is_test_mode: bool = False,
     ):
         if user_coll is None or follow_coll is None or db is None:
-            print(arango_db_helper.connections)
-            self.user_coll = arango_db_helper.connections[
-                CollectionTypes.users.value[0]
-            ]
-            self.follow_coll = arango_db_helper.connections[
-                CollectionTypes.follows.value[0]
-            ]
-            self.db = arango_db_helper.follow_db
+            helper = get_arango_db_helper(is_test_mode=is_test_mode)
+            self.user_coll = helper.get_collection("users")
+            self.follow_coll = helper.get_collection("follows")
+            self.db = helper.db
         else:
             self.user_coll = user_coll
             self.follow_coll = follow_coll
             self.db = db
 
     def _user_exists(self, username: str) -> bool:
-        # Check if user with this username exists
         return self.user_coll.has(username)
 
     def create_follow(self, follower: str, followed: str) -> dict:
-        # Validate input usernames
         UserValidator.validate_username(follower)
         UserValidator.validate_username(followed)
 
-        # Prevent following oneself
         if follower == followed:
             raise ValueError("Cannot follow oneself")
 
         print(f"[INFO] Creating follow: {follower} -> {followed}")
 
-        # Make sure both users exist
-        if not (self.user_coll.has(follower) and self.user_coll.has(followed)):
+        if not (self._user_exists(follower) and self._user_exists(followed)):
             print("[ERROR] One or both users not found.")
             raise ValueError("User not found")
 
-        # Create unique key for the follow edge
         edge_key = f"{follower}__{followed}"
         edge = {
             "_key": edge_key,
@@ -92,7 +84,6 @@ class FollowRepository:
         return results
 
     def delete_follow(self, follower: str, followed: str) -> bool:
-        # Validate input usernames
         UserValidator.validate_username(follower)
         UserValidator.validate_username(followed)
 
@@ -107,5 +98,26 @@ class FollowRepository:
         print("[INFO] Follow not found.")
         return False
 
+    def count_followers(self, username: str) -> int:
+        query = """
+        RETURN LENGTH(
+            FOR v IN 1..1 INBOUND @user follows
+                RETURN 1
+        )
+        """
+        cursor = self.db.aql.execute(query, bind_vars={"user": f"users/{username}"})
+        count = next(cursor)
+        print(f"[INFO] [{dt.now(tz=UTC).isoformat()}] User '{username}' has {count} followers.")
+        return count
 
-follow_repo = FollowRepository()
+    def count_following(self, username: str) -> int:
+        query = """
+        RETURN LENGTH(
+            FOR v IN 1..1 OUTBOUND @user follows
+                RETURN 1
+        )
+        """
+        cursor = self.db.aql.execute(query, bind_vars={"user": f"users/{username}"})
+        count = next(cursor)
+        print(f"[INFO] [{dt.now(tz=UTC).isoformat()}] User '{username}' is following {count} users.")
+        return count

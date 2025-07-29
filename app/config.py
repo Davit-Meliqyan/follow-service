@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     arango_user: str = Field("root", env="ARANGO_USER")
     arango_password: str = Field("admin", env="ARANGO_PASSWORD")
     arango_db: str = Field("follow_db", env="ARANGO_DB")
-    test_arango_db: str = Field("test_follow_db", env="ARANGO_DB")
+    test_arango_db: str = Field("test_follow_db", env="TEST_ARANGO_DB")
 
     # RabbitMQ
     rabbitmq_url: str = Field("amqp://guest:guest@localhost/", env="RABBITMQ_URL")

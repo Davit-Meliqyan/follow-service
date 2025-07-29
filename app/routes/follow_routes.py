@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
-from app.repositories.follow_repo import follow_repo
+
 from app.models import FollowCreate, FollowOut
+from app.repositories import follow_repo
 
 router = APIRouter(
     prefix="/follow",
@@ -72,3 +73,23 @@ async def delete_follow(payload: FollowCreate):
     removed = follow_repo.delete_follow(payload.follower, payload.followed)
     if not removed:
         raise HTTPException(status_code=404, detail="Follow relation not found")
+
+
+# @router.get(
+#     "/count/followers/{username}",
+#     summary="Count followers",
+#     description="Return number of users that follow the given username."
+# )
+# async def get_follower_count(username: str) -> dict:
+#     count = follow_repo.count_followers(username)
+#     return {"follower_count": count}
+#
+#
+# @router.get(
+#     "/count/following/{username}",
+#     summary="Count following",
+#     description="Return number of users that the given username is following."
+# )
+# async def get_following_count(username: str) -> dict:
+#     count = follow_repo.count_following(username)
+#     return {"following_count": count}
